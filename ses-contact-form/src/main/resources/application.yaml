@@ -1,0 +1,45 @@
+spring:
+  application:
+    name: ses-contact-form
+  profiles:
+    active: local
+  main:
+    banner-mode: "off"
+
+amazon:
+  aws:
+    region: us-east-1
+
+contact:
+  # Injected by Terraform as Lambda environment variables.
+  from-address: ${SES_FROM_ADDRESS}              # required (set by Terraform)
+  recipient-address: ${SES_RECIPIENT_ADDRESS}    # required
+  configuration-set: ${SES_CONFIGURATION_SET:}
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:}      # comma-separated, empty = reject all cross-origin calls
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+logging:
+  level:
+    root: INFO
+    com.ce: INFO
+    software.amazon.awssdk: WARN
+
+cors:
+  allowed:
+    origins: '*'
+
+application:
+  description: '@project.description@'
+  name: '@project.artifactId@'
+
+build:
+  timestamp: '@maven.build.timestamp@'
+  version: '@project.version@'
+
+server:
+  port: 8080
