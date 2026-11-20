@@ -29,12 +29,22 @@ data "aws_iam_policy_document" "logs" {
   }
 }
 
+# Extra SES identities the Lambda may send from (e.g. a verified Gmail address used as the From).
+variable "ses_additional_identity_arns" {
+  type        = list(string)
+  description = "Additional SES identity ARNs the Lambda role may send from."
+  default     = ["arn:aws:ses:us-east-1:583524027596:identity/darvintojo@gmail.com"]
+}
+
 # SES: send only via the verified identity / configuration set, and only from the expected address.
 data "aws_iam_policy_document" "ses" {
   statement {
-    effect    = "Allow"
-    actions   = ["ses:SendEmail"]
-    resources = [var.ses_identity_arn, var.ses_configuration_set_arn]
+    effect  = "Allow"
+    actions = ["ses:SendEmail"]
+    resources = concat(
+      [var.ses_identity_arn, var.ses_configuration_set_arn],
+      var.ses_additional_identity_arns
+    )
 
     condition {
       test     = "StringEquals"
