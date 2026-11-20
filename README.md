@@ -149,3 +149,45 @@ $ terraform apply -var-file="terraform.tfvars" -auto-approve
 
 ## Summary
 
+This project delivers a serverless contact-form backend that sends email from a branded address on a custom domain.
+A Spring Boot 4 (Java 21) application runs on AWS Lambda behind API Gateway and sends mail through Amazon SES.
+Terraform provisions all of the infrastructure, and GitHub Actions deploys it through OIDC with no long-lived
+credentials.
+
+### What was built
+
+| Area          | Result                                                                                                |
+|---------------|-------------------------------------------------------------------------------------------------------|
+| API           | `POST /api/contact` with input validation, CORS handling and clear `200`/`400`/`429`/`502` responses. |
+| Email         | SES domain identity with DKIM signing, SPF and DMARC, so mail comes from the custom domain.           |
+| Compute       | Lambda (Java 21, SnapStart) invoked through the `lambda-dev` alias, with pay-per-use pricing.         |
+| DNS           | Route 53 publishes the SES verification records automatically.                                        |
+| Security      | Customer-managed KMS key for logs, and least-privilege IAM roles.                                     |
+| Observability | CloudWatch log groups, metric filters, dashboards and alarms, with SNS notifications.                 |
+| Delivery      | Terraform for all resources, a remote state backend, and CI/CD through GitHub Actions with OIDC.      |
+
+### Key takeaways
+
+- **Deliverability depends on DNS.** DKIM must show *Verified*, and SPF and DMARC must be in place, before mail reliably
+  reaches inboxes.
+- **The SES sandbox is the first hurdle.** Until you are granted production access, SES only sends to verified
+  recipients.
+- **Infrastructure as Code keeps environments reproducible.** The same Terraform code and per-environment
+  `envs/*.tfvars` files serve every environment.
+- **Least privilege and encryption are part of the design.** IAM permissions are scoped narrowly, and logs are encrypted
+  with the KMS key.
+
+### Go-live checklist
+
+1. Confirm the SNS e-mail subscriptions and the SES recipient verification e-mail.
+2. Wait for DKIM = **Verified**.
+3. Request **SES production access** to leave the sandbox.
+4. Review DMARC reports, then raise `dmarc_policy` from `none` to `quarantine` or `reject`.
+5. Send a test request to `{invoke_url}/api/contact` and check for a `200 {"status":"SENT"}` response.
+
+### Possible next steps
+
+- Store submissions in DynamoDB (optional) to keep a history of messages.
+- Add AWS WAF rules or API keys for stronger abuse protection.
+- Add a CAPTCHA or honeypot field on the front end to reduce spam.
+- Promote the same stack to staging and production environments.
