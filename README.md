@@ -138,12 +138,16 @@ $ terraform apply -var-file="terraform.tfvars" -auto-approve
 }
 ```
 
+![6-POST Create Contact.png](Screenshot%20verification/6-POST%20Create%20Contact.png)
+
 | Result                                    | When                                      |
 |-------------------------------------------|-------------------------------------------|
 | `200 {"status":"SENT","messageId":"..."}` | accepted by SES                           |
 | `400` problem+json with an `errors` map   | missing/invalid/too-long fields, bad JSON |
 | `429`                                     | API Gateway / WAF throttling              |
 | `502` problem+json                        | SES rejected or was unreachable           |
+
+![7-Email received.png](Screenshot%20verification/7-Email%20received.png)
 
 ---
 
